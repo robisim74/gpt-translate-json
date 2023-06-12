@@ -1,0 +1,41 @@
+{
+  "name": "gpt-translate-json",
+  "private": false,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "build": "tsc && vite build --mode lib && dts-bundle-generator -o lib/index.d.ts src/index.ts",
+    "build.lib": "vite build --mode lib",
+    "build.lib.watch": "vite build --mode lib --watch",
+    "gtp-translate-json": "gtp-translate-json --apiKey=sk-xxx --model=gpt-3.5-turbo --maxTokens=3000 --langs=it-IT"
+  },
+  "bin": {
+    "gtp-translate-json": "./lib/cli.js"
+  },
+  "dependencies": {
+    "openai": "^3.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.2.3",
+    "dts-bundle-generator": "^8.0.1",
+    "np": "^7.7.0",
+    "typescript": "^5.0.2",
+    "vite": "^4.3.2",
+    "rollup-plugin-add-shebang": "^0.3.1"
+  },
+  "main": "./lib/index.js",
+  "module": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "import": "./lib/index.js"
+    }
+  },
+  "files": [
+    "lib"
+  ],
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
