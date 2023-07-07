@@ -24,4 +24,5 @@ dist-ssr
 *.sw?
 
 lib
-i18n
+i18n/**/*.json
+!i18n/en-US/app.json

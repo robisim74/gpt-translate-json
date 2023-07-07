@@ -1,0 +1,20 @@
+{
+  "app": {
+    "dates": "Dates & relative time",
+    "devs": {
+      "one": "{{ value }} software developer",
+      "other": "{{ value }} software developers"
+    },
+    "greeting": "Hi! I am {{name}}",
+    "list": [
+      {
+        "value": "First point"
+      },
+      {
+        "value": "Second point"
+      }
+    ],
+    "title": "<h1>Library to translate json using GPT</h1>"
+  },
+  "about": "About us"
+}

@@ -13,7 +13,16 @@ export const getJsonPaths = (obj: Translation, parentKey = '', result = new Map<
     const path = parentKey ? `${parentKey}.${key}` : key;
     const value = obj[key];
 
-    if (typeof value === 'object' && value !== null) {
+    if (Array.isArray(value)) {
+      value.forEach((item: any, index: number) => {
+        const itemPath = `${path}.${index}`;
+        if (typeof item === 'object' && item !== null) {
+          getJsonPaths(item, itemPath, result);
+        } else {
+          result.set(itemPath, item);
+        }
+      });
+    } else if (typeof value === 'object' && value !== null) {
       getJsonPaths(value, path, result);
     } else {
       result.set(path, value);

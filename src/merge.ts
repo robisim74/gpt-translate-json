@@ -9,8 +9,3 @@ export function deepSet(target: Translation, keys: string[], val: string | Trans
     target = target[key];
   }
 }
-
-export function merge(target: Translation, source: Translation) {
-  target = { ...target, ...source };
-  return target;
-}

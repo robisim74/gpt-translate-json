@@ -11,12 +11,12 @@ export interface GptTranslateJsonOptions {
    */
   model: string;
   /**
-   * Open AI model max tokens. Required
+   * Open AI model max tokens per request. Required
    */
   maxTokens: number;
   /**
-   * Additional prompt rules.
-   * Default rules:
+   * Prompt rules.
+   * Defaults:
    * 'do not translate proper names'
    * 'do not translate texts enclosed in double braces {{}}'
    * 'do not translate the html tags'
@@ -32,9 +32,13 @@ export interface GptTranslateJsonOptions {
    */
   assetsPath?: string;
   /**
-   * Languages to translate. Required
+   * All languages. Required
    */
   langs: string[];
+  /**
+   * Original language. Required
+   */
+  originalLang: string;
 }
 
 /**

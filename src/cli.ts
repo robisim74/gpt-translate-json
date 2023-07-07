@@ -65,6 +65,10 @@ for (const arg of args) {
       else if (assertType(value, 'string')) options.langs = [value];
       else errors.push(wrongOption(key, value));
       break;
+    case 'originalLang':
+      if (assertType(value, 'string')) options.originalLang = value;
+      else errors.push(wrongOption(key, value));
+      break;
     case 'error':
       errors.push(value);
       break;

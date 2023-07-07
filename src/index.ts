@@ -1,10 +1,10 @@
 import { readdir, readFile, writeFile } from 'fs/promises';
-import { existsSync } from 'fs';
+import { existsSync, mkdirSync } from 'fs';
 import { normalize } from 'path';
 import { ChatCompletionRequestMessageRoleEnum, Configuration, OpenAIApi } from 'openai';
 
 import { GptTranslateJsonOptions, Translation } from './types';
-import { deepSet, merge } from './merge';
+import { deepSet } from './merge';
 import { getJsonPaths, parseJson, toJsonString } from './json-functions';
 
 /**
@@ -25,10 +25,13 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
   }
 
   // Assets data
-  // lang => filename => path => value
-  const assetsMap = new Map<string, Map<string, Map<string, string>>>();
+  // lang => filename => translation
+  const assetsMap = new Map<string, Map<string, Translation>>();
   // Translated data
+  // lang => filename => path => value
   const translatedMap = new Map<string, Map<string, Map<string, string>>>();
+  // Translated paths
+  let metaPaths = new Set<string>();
 
   // Open AI configuration
   const configuration = new Configuration({
@@ -40,6 +43,17 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
   // Count total used tokens
   let usedTokens = 0;
 
+  const readMeta = async () => {
+    const baseMeta = normalize(`${resolvedOptions.basePath}/${resolvedOptions.assetsPath}/.meta`);
+    if (existsSync(baseMeta)) {
+      const source = await readFile(`${baseMeta}/translated.json`, 'utf8');
+      if (source) {
+        const parsed: string[] = JSON.parse(source);
+        metaPaths = new Set(parsed);
+      }
+    }
+  };
+
   const readAssets = async () => {
     for (const lang of resolvedOptions.langs) {
       const baseAssets = normalize(`${resolvedOptions.basePath}/${resolvedOptions.assetsPath}/${lang}`);
@@ -48,19 +62,17 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
         const files = await readdir(baseAssets);
 
         if (files.length > 0) {
-          let filesMap = new Map<string, Map<string, string>>();
+          let filesMap = new Map<string, Translation>();
 
           for (const filename of files) {
             let data: Translation = {};
 
             const source = await readFile(`${baseAssets}/${filename}`, 'utf8');
             if (source) {
-              const parsed = parseJson(source);
-              data = merge(data, parsed);
+              data = parseJson(source);
             }
-            filesMap.set(filename, getJsonPaths(data));
+            filesMap.set(filename, data);
           }
-
           assetsMap.set(lang, filesMap);
         }
       }
@@ -117,6 +129,25 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
     const n = Math.ceil(estimatedTokens / resolvedOptions.maxTokens);
 
     return [...chunks(texts, Math.ceil(lenTexts / n))];
+  };
+
+  const flattenData = (filesMap: Map<string, Translation>): Map<string, Map<string, string>> => {
+    const flattenData = new Map<string, Map<string, string>>();
+    for (const [filename, data] of filesMap) {
+      flattenData.set(filename, getJsonPaths(data));
+    }
+
+    return flattenData;
+  };
+
+  const filterData = (flatData: Map<string, Map<string, string>>) => {
+    for (const [, data] of flatData) {
+      for (const key of data.keys()) {
+        if (metaPaths.has(key)) data.delete(key);
+      }
+    }
+
+    return flatData;
   };
 
   const translateByFile = async (
@@ -204,15 +235,29 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
   const translateAssets = async () => {
     const tasks: Promise<void>[] = [];
 
-    for (const [lang, filesMap] of assetsMap) {
-      tasks.push(translateByLang(lang, filesMap));
-    }
+    // Original data
+    const filesMap = assetsMap.get(resolvedOptions.originalLang);
+    if (filesMap) {
+      // Flatten to filename => path => value
+      const flatData = flattenData(filesMap)
+      // Filter meta
+      const filteredFilesMap = filterData(flatData);
+      // Translate langs
+      for (const lang of resolvedOptions.langs.filter(lang => lang !== resolvedOptions.originalLang)) {
+        tasks.push(translateByLang(lang, filteredFilesMap));
+      }
 
-    await Promise.all(tasks);
+      await Promise.all(tasks);
+    } else {
+      throw new Error('Original asset not found');
+    }
   };
 
   const writeAsset = async (translation: Translation, filename: string, lang: string) => {
     const baseAssets = normalize(`${resolvedOptions.basePath}/${resolvedOptions.assetsPath}/${lang}`);
+    if (!existsSync(baseAssets)) {
+      mkdirSync(baseAssets, { recursive: true });
+    }
     const data = toJsonString(translation);
     const file = normalize(`${baseAssets}/${filename}`);
     await writeFile(file, data);
@@ -220,9 +265,42 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
     console.log(file);
   };
 
+  const writeMeta = async () => {
+    const baseMeta = normalize(`${resolvedOptions.basePath}/${resolvedOptions.assetsPath}/.meta`);
+    if (!existsSync(baseMeta)) {
+      mkdirSync(baseMeta, { recursive: true });
+    }
+    const data = toJsonString(Array.from(metaPaths));
+    const file = normalize(`${baseMeta}/translated.json`);
+    await writeFile(file, data);
+    // Log
+    console.log(file);
+  };
+
+  const writeTranslations = async () => {
+    for (const [lang, translatedFilesMap] of translatedMap) {
+      for (const [filename, translatedData] of translatedFilesMap) {
+        // Existing or new translation
+        const translation: Translation = assetsMap.get(lang)?.get(filename) || {};
+        const keys = Array.from(translatedData.keys());
+        keys.forEach(key => {
+          // Set meta
+          metaPaths.add(key);
+          // Set keys
+          deepSet(translation, key.split('.'), translatedData.get(key) || '');
+        });
+        // Write
+        await writeAsset(translation, filename, lang);
+      }
+    }
+  };
+
   /**
    * START PIPELINE
    */
+
+  /* Read meta */
+  await readMeta();
 
   /* Read assets */
   await readAssets();
@@ -231,18 +309,10 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
   await translateAssets();
 
   /* Write translations */
-  for (const [lang, translatedFilesMap] of translatedMap) {
-    for (const [filename, translatedData] of translatedFilesMap) {
-      const translation: Translation = {};
-      const keys = Array.from(translatedData.keys());
-      // Set keys
-      keys.forEach(key => {
-        deepSet(translation, key.split('.'), translatedData.get(key) || '');
-      });
-      // Write
-      await writeAsset(translation, filename, lang);
-    }
-  }
+  await writeTranslations();
+
+  /* Write meta */
+  await writeMeta();
 
   /* Log */
   console.log('\x1b[36m%s\x1b[0m', 'Total tokens: ' + usedTokens);
