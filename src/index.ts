@@ -32,8 +32,10 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
   const translatedMap = new Map<string, Map<string, Map<string, string>>>();
   // Translated paths
   let metaPaths = new Set<string>();
+  // Translated langs
+  let metaLangs = new Set<string>();
 
-  // Open AI configuration
+  // OpenAI configuration
   const configuration = new Configuration({
     apiKey: resolvedOptions.apiKey,
   });
@@ -44,12 +46,17 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
   let usedTokens = 0;
 
   const readMeta = async () => {
-    const baseMeta = normalize(`${resolvedOptions.basePath}/${resolvedOptions.assetsPath}/.meta`);
+    const baseMeta = normalize(`${resolvedOptions.basePath}/${resolvedOptions.assetsPath}/.metadata`);
     if (existsSync(baseMeta)) {
-      const source = await readFile(`${baseMeta}/translated.json`, 'utf8');
-      if (source) {
-        const parsed: string[] = JSON.parse(source);
+      const pathsSource = await readFile(`${baseMeta}/translated.json`, 'utf8');
+      if (pathsSource) {
+        const parsed: string[] = JSON.parse(pathsSource);
         metaPaths = new Set(parsed);
+      }
+      const langsSource = await readFile(`${baseMeta}/translated-langs.json`, 'utf8');
+      if (langsSource) {
+        const parsed: string[] = JSON.parse(langsSource);
+        metaLangs = new Set(parsed);
       }
     }
   };
@@ -140,14 +147,19 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
     return flattenData;
   };
 
-  const filterData = (flatData: Map<string, Map<string, string>>) => {
-    for (const [, data] of flatData) {
-      for (const key of data.keys()) {
-        if (metaPaths.has(key)) data.delete(key);
+  const filterData = (flatFilesMap: Map<string, Map<string, string>>) => {
+    const filteredData = new Map<string, Map<string, string>>();
+    for (const [filename, data] of flatFilesMap) {
+      const filteredFlatData = new Map<string, string>();
+      for (const [key, value] of data) {
+        if (!metaPaths.has(key)) {
+          filteredFlatData.set(key, value);
+        }
       }
+      filteredData.set(filename, filteredFlatData);
     }
 
-    return flatData;
+    return filteredData;
   };
 
   const translateByFile = async (
@@ -186,10 +198,10 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
             // Count tokens
             usedTokens += response.data.usage?.total_tokens ?? 0;
           } else {
-            throw new Error('No response');
+            throw new Error('OpenAI API - No response');
           }
         } catch (ex: any) {
-          throw new Error(ex.response.statusText);
+          throw new Error('OpenAI API - ' + ex.response.statusText);
         }
       }
 
@@ -207,7 +219,7 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
         throw new Error('Translations mismatching');
       }
     } catch (ex: any) {
-      throw new Error(`${filename}: ${ex.Message}`);
+      throw new Error(`${filename}: ${ex.message}`);
     }
 
     return translatedFilesMap;
@@ -239,12 +251,20 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
     const filesMap = assetsMap.get(resolvedOptions.originalLang);
     if (filesMap) {
       // Flatten to filename => path => value
-      const flatData = flattenData(filesMap)
+      const flatFilesMap = flattenData(filesMap)
       // Filter meta
-      const filteredFilesMap = filterData(flatData);
+      const filteredFilesMap = filterData(flatFilesMap);
       // Translate langs
-      for (const lang of resolvedOptions.langs.filter(lang => lang !== resolvedOptions.originalLang)) {
-        tasks.push(translateByLang(lang, filteredFilesMap));
+      for (const lang of resolvedOptions.langs) {
+        if (lang !== resolvedOptions.originalLang) {
+          if (metaLangs.has(lang)) {
+            // Update translation
+            tasks.push(translateByLang(lang, filteredFilesMap));
+          } else {
+            // Complete translation
+            tasks.push(translateByLang(lang, flatFilesMap));
+          }
+        }
       }
 
       await Promise.all(tasks);
@@ -266,15 +286,19 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
   };
 
   const writeMeta = async () => {
-    const baseMeta = normalize(`${resolvedOptions.basePath}/${resolvedOptions.assetsPath}/.meta`);
+    const baseMeta = normalize(`${resolvedOptions.basePath}/${resolvedOptions.assetsPath}/.metadata`);
     if (!existsSync(baseMeta)) {
       mkdirSync(baseMeta, { recursive: true });
     }
-    const data = toJsonString(Array.from(metaPaths));
-    const file = normalize(`${baseMeta}/translated.json`);
-    await writeFile(file, data);
+    const pathsData = toJsonString(Array.from(metaPaths));
+    const pathsFile = normalize(`${baseMeta}/translated.json`);
+    await writeFile(pathsFile, pathsData);
+    const langsData = toJsonString(Array.from(metaLangs));
+    const langsFile = normalize(`${baseMeta}/translated-langs.json`);
+    await writeFile(langsFile, langsData);
     // Log
-    console.log(file);
+    console.log(pathsFile);
+    console.log(langsFile);
   };
 
   const writeTranslations = async () => {
@@ -292,6 +316,8 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
         // Write
         await writeAsset(translation, filename, lang);
       }
+      // Set meta
+      metaLangs.add(lang);
     }
   };
 
@@ -305,7 +331,7 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
   /* Read assets */
   await readAssets();
 
-  /* Translate assets by Open AI API */
+  /* Translate assets by OpenAI API */
   await translateAssets();
 
   /* Write translations */
