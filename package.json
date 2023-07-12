@@ -1,16 +1,16 @@
 {
   "name": "gpt-translate-json",
   "private": false,
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "scripts": {
     "build": "tsc && vite build --mode lib && dts-bundle-generator -o lib/index.d.ts src/index.ts",
     "build.lib": "vite build --mode lib",
     "build.lib.watch": "vite build --mode lib --watch",
-    "gtp-translate-json": "gtp-translate-json --apiKey=sk-xxxx --model=gpt-3.5-turbo --maxTokens=3000 --langs=en-US,it-IT --originalLang=en-US"
+    "gpt-translate-json": "gpt-translate-json --apiKey=openai_apy_key --model=gpt-3.5-turbo --maxTokens=3000 --langs=en-US,it-IT --originalLang=en-US"
   },
   "bin": {
-    "gtp-translate-json": "./lib/cli.js"
+    "gpt-translate-json": "./lib/cli.js"
   },
   "dependencies": {
     "openai": "^3.3.0"

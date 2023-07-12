@@ -3,15 +3,15 @@
  */
 export interface GptTranslateJsonOptions {
   /**
-   * Open AI API key. Required
+   * OpenAI API key. Required
    */
   apiKey: string;
   /**
-   * Open AI Chat Completion model. Required
+   * OpenAI Chat Completion model. Required
    */
   model: string;
   /**
-   * Open AI model max tokens per request. Required
+   * OpenAI model max tokens per request. Required
    */
   maxTokens: number;
   /**
@@ -32,7 +32,7 @@ export interface GptTranslateJsonOptions {
    */
   assetsPath?: string;
   /**
-   * All languages. Required
+   * All supported languages. Required
    */
   langs: string[];
   /**
