@@ -1,4 +1,5 @@
 # GPT Translate JSON
+[![Node.js CI](https://github.com/robisim74/gpt-translate-json/actions/workflows/node.js.yml/badge.svg)](https://github.com/robisim74/gpt-translate-json/actions/workflows/node.js.yml)
 
 > Command to automatically translate your app JSON files using OpenAI GPT Chat Completions API
 
