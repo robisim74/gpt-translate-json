@@ -14,7 +14,7 @@ npm install gpt-translate-json --save-dev
 Add the command in `package.json`, and provide required parameters:
 ```json
 "scripts": {
-  "gpt-translate-json": "gpt-translate-json --apiKey=openai_api_key --model=gpt-3.5-turbo --maxTokens=3000 --langs=en-US,it-IT --originalLang=en-US""
+  "gpt-translate-json": "gpt-translate-json --apiKey=openai_api_key --model=gpt-3.5-turbo --maxTokens=3000 --langs=en-US,it-IT --originalLang=en-US"
 }
 ```
 Available options:
@@ -104,7 +104,7 @@ The file `.metadata/translated-langs.json` contains the langs already translated
 
 ```json
 "scripts": {
-  "gpt-translate-json": "gpt-translate-json --apiKey=openai_api_key --model=gpt-3.5-turbo --maxTokens=3000 --langs=en-US,it-IT,es-ES --originalLang=en-US""
+  "gpt-translate-json": "gpt-translate-json --apiKey=openai_api_key --model=gpt-3.5-turbo --maxTokens=3000 --langs=en-US,it-IT,es-ES --originalLang=en-US"
 }
 ```
 will generate:
@@ -154,6 +154,9 @@ await gptTranslateJson({
 ```shell
 npm install
 npm run build
+
+npm link
+npm run gpt-translate-json
 ```
 
 ## License

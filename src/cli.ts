@@ -80,7 +80,9 @@ for (const arg of args) {
 // Required options
 if (!options.apiKey) errors.push(missingOption('apiKey'));
 if (!options.apiKey) errors.push(missingOption('model'));
+if (!options.maxTokens) errors.push(missingOption('maxTokens'));
 if (!options.langs) errors.push(missingOption('langs'));
+if (!options.originalLang) errors.push(missingOption('originalLang'));
 
 // Log errors
 if (errors.length > 0) {

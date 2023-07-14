@@ -8,7 +8,7 @@ import { deepSet } from './merge';
 import { getJsonPaths, parseJson, toJsonString } from './json-functions';
 
 /**
- * Translate Json files using ChatGPT
+ * Translate Json files using OpenAI GPT Chat Completions API
  */
 export async function gptTranslateJson(options: GptTranslateJsonOptions) {
   // Resolve options
