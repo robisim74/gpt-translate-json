@@ -9,6 +9,7 @@
     "build.lib": "vite build --mode lib",
     "build.lib.watch": "vite build --mode lib --watch",
     "release": "npm run build && np",
+    "test": "echo \"No test\"",
     "gpt-translate-json": "gpt-translate-json --apiKey=openai_apy_key --model=gpt-3.5-turbo --maxTokens=3000 --langs=en-US,it-IT --originalLang=en-US"
   },
   "bin": {
