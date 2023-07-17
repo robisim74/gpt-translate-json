@@ -87,8 +87,9 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
   };
 
   const generatePrompt = (displayName: string, rules: string[], strData: string): string => {
+    const originalDisplayName = new Intl.DisplayNames(['en'], { type: 'language' }).of(resolvedOptions.originalLang);
     // Request
-    let prompt = `Translate the following array of texts to ${displayName}: `;
+    let prompt = `Translate the following array of texts from ${originalDisplayName} to ${displayName}: `;
     // Data
     prompt += strData;
     // Rules
@@ -166,10 +167,10 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
     filename: string,
     data: Map<string, string>,
     lang: string
-  ): Promise<Map<string, Map<string, string>>> => {
+  ): Promise<{ filename: string, translatedData: Map<string, string> }> => {
     const displayName = new Intl.DisplayNames(['en'], { type: 'language' }).of(lang) || lang;
 
-    let translatedFilesMap = new Map<string, Map<string, string>>();
+    const translatedData = new Map<string, string>();
     try {
       const texts = Array.from(data.values());
       let splittedTexts = splitTexts(texts);
@@ -209,12 +210,11 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
 
       // Check the match
       if (keys.length === translatedTexts.length) {
-        const translatedData = new Map<string, string>();
         // Set translation
         keys.forEach((key, i) => {
           translatedData.set(key, translatedTexts[i]);
         });
-        translatedFilesMap.set(filename, translatedData);
+
       } else {
         throw new Error('Translations mismatching');
       }
@@ -222,11 +222,11 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
       throw new Error(`${filename}: ${ex.message}`);
     }
 
-    return translatedFilesMap;
+    return { filename: filename, translatedData: translatedData };
   };
 
   const translateByLang = async (lang: string, filesMap: Map<string, Map<string, string>>) => {
-    const tasks: Promise<Map<string, Map<string, string>>>[] = [];
+    const tasks: Promise<{ filename: string, translatedData: Map<string, string> }>[] = [];
 
     for (const [filename, data] of filesMap) {
       tasks.push(translateByFile(filename, data, lang));
@@ -234,14 +234,17 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
 
     const results = await Promise.allSettled(tasks);
 
+    const translatedFilesMap = new Map<string, Map<string, string>>();
     results.forEach(result => {
       if (result.status === 'rejected') {
         console.log('\x1b[33m%s\x1b[0m', result.reason);
       }
       if (result.status === 'fulfilled') {
-        translatedMap.set(lang, result.value);
+        translatedFilesMap.set(result.value.filename, result.value.translatedData);
       }
     });
+
+    translatedMap.set(lang, translatedFilesMap);
   };
 
   const translateAssets = async () => {
