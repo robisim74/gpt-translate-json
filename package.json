@@ -10,7 +10,7 @@
     "build.lib.watch": "vite build --mode lib --watch",
     "lint": "eslint src/**/*.ts*",
     "release": "npm run build && np",
-    "test": "echo \"No test\"",
+    "test": "vitest test --run",
     "gpt-translate-json": "gpt-translate-json --apiKey=openai_apy_key --model=gpt-3.5-turbo --maxTokens=3000 --langs=en-US,it-IT --originalLang=en-US"
   },
   "bin": {
@@ -28,7 +28,8 @@
     "np": "^7.7.0",
     "rollup-plugin-add-shebang": "^0.3.1",
     "typescript": "^5.1.6",
-    "vite": "^4.4.4"
+    "vite": "^4.4.4",
+    "vitest": "^0.33.0"
   },
   "main": "./lib/index.js",
   "module": "./lib/index.js",
@@ -56,7 +57,8 @@
   "keywords": [
     "json",
     "translate",
-    "i18n"
+    "i18n",
+    "GPT"
   ],
   "license": "MIT"
 }

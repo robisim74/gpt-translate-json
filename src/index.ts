@@ -202,7 +202,7 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
             throw new Error('OpenAI API - No response');
           }
         } catch (ex: any) {
-          throw new Error('OpenAI API - ' + ex.response.statusText);
+          throw new Error('OpenAI API - ' + ex.response?.statusText);
         }
       }
 
@@ -288,22 +288,6 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
     console.log(file);
   };
 
-  const writeMeta = async () => {
-    const baseMeta = normalize(`${resolvedOptions.basePath}/${resolvedOptions.assetsPath}/.metadata`);
-    if (!existsSync(baseMeta)) {
-      mkdirSync(baseMeta, { recursive: true });
-    }
-    const pathsData = toJsonString(Array.from(metaPaths));
-    const pathsFile = normalize(`${baseMeta}/translated.json`);
-    await writeFile(pathsFile, pathsData);
-    const langsData = toJsonString(Array.from(metaLangs));
-    const langsFile = normalize(`${baseMeta}/translated-langs.json`);
-    await writeFile(langsFile, langsData);
-    // Log
-    console.log(pathsFile);
-    console.log(langsFile);
-  };
-
   const writeTranslations = async () => {
     for (const [lang, translatedFilesMap] of translatedMap) {
       for (const [filename, translatedData] of translatedFilesMap) {
@@ -322,6 +306,22 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
       // Set meta
       metaLangs.add(lang);
     }
+  };
+
+  const writeMeta = async () => {
+    const baseMeta = normalize(`${resolvedOptions.basePath}/${resolvedOptions.assetsPath}/.metadata`);
+    if (!existsSync(baseMeta)) {
+      mkdirSync(baseMeta, { recursive: true });
+    }
+    const pathsData = toJsonString(Array.from(metaPaths));
+    const pathsFile = normalize(`${baseMeta}/translated.json`);
+    await writeFile(pathsFile, pathsData);
+    const langsData = toJsonString(Array.from(metaLangs));
+    const langsFile = normalize(`${baseMeta}/translated-langs.json`);
+    await writeFile(langsFile, langsData);
+    // Log
+    console.log(pathsFile);
+    console.log(langsFile);
   };
 
   /**

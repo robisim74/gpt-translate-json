@@ -156,8 +156,7 @@ await gptTranslateJson({
 npm install
 npm run build
 
-npm link
-npm run gpt-translate-json
+npm test
 ```
 
 ## License
