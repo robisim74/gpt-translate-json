@@ -5,9 +5,10 @@
   "description": "Command to automatically translate your app JSON files using OpenAI GPT Chat Completions API",
   "type": "module",
   "scripts": {
-    "build": "tsc && vite build --mode lib && dts-bundle-generator -o lib/index.d.ts src/index.ts",
+    "build": "npm run lint && tsc && vite build --mode lib && dts-bundle-generator -o lib/index.d.ts src/index.ts",
     "build.lib": "vite build --mode lib",
     "build.lib.watch": "vite build --mode lib --watch",
+    "lint": "eslint src/**/*.ts*",
     "release": "npm run build && np",
     "test": "echo \"No test\"",
     "gpt-translate-json": "gpt-translate-json --apiKey=openai_apy_key --model=gpt-3.5-turbo --maxTokens=3000 --langs=en-US,it-IT --originalLang=en-US"
@@ -20,11 +21,14 @@
   },
   "devDependencies": {
     "@types/node": "^20.4.2",
+    "@typescript-eslint/eslint-plugin": "^6.1.0",
+    "@typescript-eslint/parser": "^6.1.0",
     "dts-bundle-generator": "^8.0.1",
+    "eslint": "^8.45.0",
     "np": "^7.7.0",
+    "rollup-plugin-add-shebang": "^0.3.1",
     "typescript": "^5.1.6",
-    "vite": "^4.4.4",
-    "rollup-plugin-add-shebang": "^0.3.1"
+    "vite": "^4.4.4"
   },
   "main": "./lib/index.js",
   "module": "./lib/index.js",

@@ -69,7 +69,7 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
         const files = await readdir(baseAssets);
 
         if (files.length > 0) {
-          let filesMap = new Map<string, Translation>();
+          const filesMap = new Map<string, Translation>();
 
           for (const filename of files) {
             let data: Translation = {};
