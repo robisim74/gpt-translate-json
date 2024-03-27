@@ -11,13 +11,13 @@
     "lint": "eslint src/**/*.ts*",
     "release": "npm run build && np",
     "test": "vitest test --run",
-    "gpt-translate-json": "gpt-translate-json --apiKey=openai_apy_key --model=gpt-3.5-turbo --maxTokens=3000 --langs=en-US,it-IT --originalLang=en-US"
+    "gpt-translate-json": "node ./lib/cli.js --apiKey=openai_apy_key --model=gpt-4 --maxTokens=3000 --langs=en-US,it-IT --originalLang=en-US"
   },
   "bin": {
     "gpt-translate-json": "./lib/cli.js"
   },
   "dependencies": {
-    "openai": "^3.3.0"
+    "openai": "^4.29.2"
   },
   "devDependencies": {
     "@types/node": "^20.4.2",

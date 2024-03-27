@@ -1,7 +1,7 @@
 import { readdir, readFile, writeFile } from 'fs/promises';
 import { existsSync, mkdirSync } from 'fs';
 import { normalize } from 'path';
-import { ChatCompletionRequestMessageRoleEnum, Configuration, OpenAIApi } from 'openai';
+import OpenAI from 'openai';
 
 import { GptTranslateJsonOptions, Translation } from './types';
 import { deepSet } from './merge';
@@ -36,11 +36,9 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
   let metaLangs = new Set<string>();
 
   // OpenAI configuration
-  const configuration = new Configuration({
+  const openai = new OpenAI({
     apiKey: resolvedOptions.apiKey,
   });
-
-  const openai = new OpenAIApi(configuration);
 
   // Count total used tokens
   let usedTokens = 0;
@@ -97,14 +95,14 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
     prompt += rules.join(';');
     prompt += '. ';
     // Return type
-    prompt += 'You have to return only the translated array in the same order, and nothing else.';
+    prompt += 'You have to return only the translated array in the same order, as valid JSON array, and nothing else.';
 
     return prompt;
   };
 
   const generateMessages = (prompt: string) => {
-    const messages = [
-      { role: ChatCompletionRequestMessageRoleEnum.User, content: prompt }
+    const messages: OpenAI.ChatCompletionMessageParam[] = [
+      { role: "user", content: prompt }
     ];
     return messages;
   };
@@ -183,26 +181,28 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
 
         // Call API
         try {
-          const response = await openai.createChatCompletion({
+          const response = await openai.chat.completions.create({
             model: resolvedOptions.model,
             messages: messages,
             temperature: 0,
             n: 1
           });
 
-          if (response?.data) {
-            const content = response.data.choices?.[0].message?.content;
+          if (response?.choices) {
+            const content = response.choices[0].message?.content;
+            console.log(content);
             if (content) {
-              translatedTexts = [...translatedTexts, ...JSON.parse(content)]
+              const jsonContent = JSON.parse(content);
+              translatedTexts = [...translatedTexts, ...jsonContent]
             }
 
             // Count tokens
-            usedTokens += response.data.usage?.total_tokens ?? 0;
+            usedTokens += response.usage?.total_tokens ?? 0;
           } else {
             throw new Error('OpenAI API - No response');
           }
         } catch (ex: any) {
-          throw new Error('OpenAI API - ' + ex.response?.statusText);
+          throw new Error('OpenAI API - ' + ex?.message);
         }
       }
 
