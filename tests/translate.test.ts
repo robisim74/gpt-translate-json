@@ -2,7 +2,7 @@ import { test, describe, expect, vi } from 'vitest';
 
 import { readdir, readFile, writeFile } from 'fs/promises';
 import { normalize } from 'path';
-import { OpenAIApi } from 'openai';
+import OpenAI from 'openai';
 
 import { gptTranslateJson } from '../src/index';
 import { mockAsset, mockMetaTranslated, mockMetaTranslatedLangs, mockResponse, mockTranslatedAsset } from './mock';
@@ -31,7 +31,7 @@ vi.mock('fs', async () => {
 
 describe('gptTranslateJson', () => {
   test('translate', async () => {
-    vi.spyOn(OpenAIApi.prototype, 'createChatCompletion').mockImplementationOnce(() => Promise.resolve<any>({ data: mockResponse }));
+    vi.spyOn(OpenAI.Chat.Completions.prototype, 'create').mockImplementationOnce(() => Promise.resolve<any>(mockResponse));
 
     await gptTranslateJson({
       apiKey: 'openai_api_key',

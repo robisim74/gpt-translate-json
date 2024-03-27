@@ -190,7 +190,7 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
 
           if (response?.choices) {
             const content = response.choices[0].message?.content;
-            console.log(content);
+
             if (content) {
               const jsonContent = JSON.parse(content);
               translatedTexts = [...translatedTexts, ...jsonContent]
