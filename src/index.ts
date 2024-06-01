@@ -134,7 +134,7 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
     const estimatedTokens = estimateTokens(lenTexts);
     const n = Math.ceil(estimatedTokens / resolvedOptions.maxTokens);
 
-    return [...chunks(texts, Math.ceil(lenTexts / n))];
+    return [...chunks(texts, Math.ceil(texts.length / n))];
   };
 
   const flattenData = (filesMap: Map<string, Translation>): Map<string, Map<string, string>> => {
