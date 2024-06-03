@@ -4,7 +4,7 @@ import { normalize } from 'path';
 import OpenAI from 'openai';
 
 import { GptTranslateJsonOptions, Translation } from './types';
-import { deepSet } from './merge';
+import { deepMerge, deepSet } from './merge';
 import { getJsonPaths, parseJson, toJsonString } from './json-functions';
 
 /**
@@ -292,16 +292,21 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
     for (const [lang, translatedFilesMap] of translatedMap) {
       for (const [filename, translatedData] of translatedFilesMap) {
         // Existing or new translation
+        const originalTranslation = assetsMap.get(resolvedOptions.originalLang)?.get(filename) || {};
         const translation: Translation = assetsMap.get(lang)?.get(filename) || {};
+
+        // To handle arrays before deep set
+        const mergedTranslation = deepMerge(originalTranslation, translation);
+
         const keys = Array.from(translatedData.keys());
         keys.forEach(key => {
           // Set meta
           metaPaths.add(key);
           // Set keys
-          deepSet(translation, key.split('.'), translatedData.get(key) || '');
+          deepSet(mergedTranslation, key.split('.'), translatedData.get(key) || '');
         });
         // Write
-        await writeAsset(translation, filename, lang);
+        await writeAsset(mergedTranslation, filename, lang);
       }
       // Set meta
       metaLangs.add(lang);
