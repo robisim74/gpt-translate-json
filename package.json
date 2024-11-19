@@ -1,7 +1,7 @@
 {
   "name": "gpt-translate-json",
   "private": false,
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Command to automatically translate your app JSON files using OpenAI GPT Chat Completions API",
   "type": "module",
   "scripts": {
