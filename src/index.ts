@@ -95,7 +95,7 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
     prompt += rules.join(';');
     prompt += '. ';
     // Return type
-    prompt += 'You have to return only the translated array in the same order, as valid JSON array, and nothing else.';
+    prompt += 'You have to return only the translated array in the same order, as valid JSON array, without JSON md markers, and nothing else.';
 
     return prompt;
   };
@@ -185,7 +185,9 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
             model: resolvedOptions.model,
             messages: messages,
             temperature: 0,
-            n: 1
+            n: 1,
+            // Not supported by old models
+            //response_format: { type: 'json_object' }
           });
 
           if (response?.choices) {
@@ -193,7 +195,8 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
 
             if (content) {
               const jsonContent = JSON.parse(content);
-              translatedTexts = [...translatedTexts, ...jsonContent]
+              //const jsonContent = content.result;
+              translatedTexts = [...translatedTexts, ...jsonContent];
             }
 
             // Count tokens
