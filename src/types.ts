@@ -3,17 +3,22 @@
  */
 export interface GptTranslateJsonOptions {
   /**
-   * OpenAI API key. Required
+   * API key for the selected provider. Required
    */
   apiKey: string;
   /**
-   * OpenAI Chat Completion model. Required
+   * Chat Completion model. Required
    */
   model: string;
   /**
-   * OpenAI model max tokens per request. Required
+   * Model max tokens per request. Required
    */
   maxTokens: number;
+  /**
+   * AI provider. Default to 'openai'.
+   * Available: 'openai', 'gemini'
+   */
+  provider?: string;
   /**
    * Prompt rules.
    * Defaults:

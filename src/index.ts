@@ -4,16 +4,18 @@ import { normalize } from 'path';
 import OpenAI from 'openai';
 
 import { GptTranslateJsonOptions, Translation } from './types';
+import { getProviderConfig } from './providers';
 import { deepMerge, deepSet } from './merge';
 import { getJsonPaths, parseJson, toJsonString } from './json-functions';
 
 /**
- * Translate Json files using OpenAI GPT Chat Completions API
+ * Translate Json files using OpenAI-compatible Chat Completions API
  */
 export async function gptTranslateJson(options: GptTranslateJsonOptions) {
   // Resolve options
   const resolvedOptions: Required<GptTranslateJsonOptions> = {
     ...options,
+    provider: options.provider ?? 'openai',
     basePath: options.basePath ?? './',
     rules: options.rules ?? [
       'do not translate proper names',
@@ -35,9 +37,11 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
   // Translated langs
   let metaLangs = new Set<string>();
 
-  // OpenAI configuration
+  // Provider configuration
+  const providerConfig = getProviderConfig(resolvedOptions.provider);
   const openai = new OpenAI({
     apiKey: resolvedOptions.apiKey,
+    ...(providerConfig.baseURL && { baseURL: providerConfig.baseURL }),
   });
 
   // Count total used tokens
@@ -194,18 +198,19 @@ export async function gptTranslateJson(options: GptTranslateJsonOptions) {
             const content = response.choices[0].message?.content;
 
             if (content) {
-              const jsonContent = JSON.parse(content);
-              //const jsonContent = content.result;
+              // Strip markdown code fences if present (e.g. Gemini wraps responses in ```json ... ```)
+              const cleanContent = content.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '');
+              const jsonContent = JSON.parse(cleanContent);
               translatedTexts = [...translatedTexts, ...jsonContent];
             }
 
             // Count tokens
             usedTokens += response.usage?.total_tokens ?? 0;
           } else {
-            throw new Error('OpenAI API - No response');
+            throw new Error(`${resolvedOptions.provider} API - No response`);
           }
         } catch (ex: any) {
-          throw new Error('OpenAI API - ' + ex?.message);
+          throw new Error(`${resolvedOptions.provider} API - ${ex?.message}`);
         }
       }
 

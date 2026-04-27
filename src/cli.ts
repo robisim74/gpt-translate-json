@@ -39,6 +39,10 @@ for (const arg of args) {
       if (assertType(value, 'string')) options.apiKey = value;
       else errors.push(wrongOption(key, value));
       break;
+    case 'provider':
+      if (assertType(value, 'string')) options.provider = value;
+      else errors.push(wrongOption(key, value));
+      break;
     case 'model':
       if (assertType(value, 'string')) options.model = value;
       else errors.push(wrongOption(key, value));
